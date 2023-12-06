@@ -1,0 +1,46 @@
+
+
+- Log in to the system that contains the Zeek logs containing addresses
+that need to be looked up.  You need to log in to that system as a user
+that can write to the zeek log directory tree (commonly /opt/zeek/logs/
+or /opt/zeek/remotelogs/sensorname/yyyy-mm-dd/).
+
+- Find the IP address of the DNS server that has both the PTR, ipv4 A
+(and optionally ipv6 AAAA) records for those IP addresses.
+
+- Run:
+mkdir -p ~/bin/
+
+- Copy these files to ~/bin/ :
+active_dns_lookup.py
+db_lib.py
+zcutter.py
+justone.py
+run_active_dns.sh
+
+- Run:
+chmod 755 ~/bin/*.py ~/bin/run_active_dns.sh
+sudo -H pip install dnspython
+
+- Edit ~/bin/run_active_dns.sh with your preferred editor ("nano" is
+relatively easy if you don't have one.)  Modify the "export
+dns_server..." line (instructions are just above the line).  Also, edit
+the "egrep" command line to select the addresses to look up;
+instructions to do that are also just below the "export dns_server..."
+line.
+
+- Run:
+~/bin/run_active_dns.sh /full/path/to/dir/with/zeek/logs/
+	, such as:
+~/bin/run_active_dns.sh /opt/zeek/sensor1__1234/2023-11-01/
+	and report back any errors to support@activecountermeasures.com .
+
+- If all goes well, you'll have an additional dns log file called 
+dns.23:59:58-23:59:59.log.gz
+
+    in your zeek log directory.  You can create a test AC-Hunter
+    database with it by running:
+rita import /full/path/to/dir/with/zeek/logs/ sim_dns_test1
+    When that finishes importing, take a look at that database; you 
+    should have local hostnames included too.
+
