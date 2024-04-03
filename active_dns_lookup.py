@@ -9,7 +9,7 @@ pairs on stdout, or prints them in Zeek dns log format if requested."""
 #Released under the GPL
 
 
-__version__ = '0.0.11'
+__version__ = '0.0.12'
 
 __author__ = 'William Stearns'
 __copyright__ = 'Copyright 2023, William Stearns'
@@ -93,13 +93,13 @@ def dns_lookup(queries: List[str], dns_type: str, dns_servers: List[str]) -> Lis
 		fail('No dnspython library to load, exiting.')
 
 	if 'dns_h' not in dns_lookup.__dict__:
-		dns_lookup.dns_h: dns.resolver.Resolver = dns.resolver.Resolver()
-		dns_lookup.dns_h.timeout = dns_max_lookup_lifetime * 2 / 3
-		dns_lookup.dns_h.lifetime = dns_max_lookup_lifetime
+		dns_lookup.dns_h: dns.resolver.Resolver = dns.resolver.Resolver()			# type: ignore
+		dns_lookup.dns_h.timeout = dns_max_lookup_lifetime * 2 / 3				# type: ignore
+		dns_lookup.dns_h.lifetime = dns_max_lookup_lifetime					# type: ignore
 		if dns_servers:
-			dns_lookup.dns_h.nameservers = dns_servers
+			dns_lookup.dns_h.nameservers = dns_servers					# type: ignore
 		else:
-			dns_lookup.dns_h.nameservers = ['8.8.8.8']
+			dns_lookup.dns_h.nameservers = ['8.8.8.8']					# type: ignore
 
 
 	if dns_type != '':
@@ -108,9 +108,9 @@ def dns_lookup(queries: List[str], dns_type: str, dns_servers: List[str]) -> Lis
 				if dns_type == 'PTR' and not one_query.endswith(('.ip6.arpa', '.in-addr.arpa','.ip6.arpa.', '.in-addr.arpa.')):
 					#Handles both IPv4 and IPv6 addresses, constructing ...ip6.arpa and ...in-addr.arpa forms
 					rev_query = ipaddress.ip_address(one_query).reverse_pointer
-					dns_answer_obj = dns_lookup.dns_h.resolve(rev_query, dns_type)
+					dns_answer_obj = dns_lookup.dns_h.resolve(rev_query, dns_type)	# type: ignore
 				else:
-					dns_answer_obj = dns_lookup.dns_h.resolve(one_query, dns_type)
+					dns_answer_obj = dns_lookup.dns_h.resolve(one_query, dns_type)	# type: ignore
 				for one_rec in dns_answer_obj:
 					#Only append if not already there to avoid duplicate responses in the list.
 					if one_rec.to_text() not in response_list:
@@ -137,12 +137,12 @@ def process_an_address(incoming_ip: str, dns_list: List, zeek_format: bool):
 	turn that hostname back into one ore more IPs."""
 
 	if 'h2i_already_printed' not in process_an_address.__dict__:
-		process_an_address.h2i_already_printed: List[tuple[str]] = []				#A list of tuples (hostname, string of IP addresses list) that have already been printed.  Reduces redundant output.
+		process_an_address.h2i_already_printed: List[tuple[str]] = []				# type: ignore #A list of tuples (hostname, string of IP addresses list) that have already been printed.  Reduces redundant output.
 													#Note: we _will_ print a (hostname, IP address list) set more than once if the IP address list changes.
 
 	hostnames: List[str] = []									#List of hostnames (retrieved from cache or DNS) for the IP we're currently processing.
 	final_ips: List[str] = []									#List of IPs (retrieved from cache or DNS) for the hostname we're currently processing.
-	h2i_sig: tuple[str] = ()									#Static tuple (hostname, string of IP addresses list) used to remember what we've already printed.
+	h2i_sig: tuple[str, ...] = ()									#Static tuple (hostname, string of IP addresses list) used to remember what we've already printed.
 
 	hostnames = select_key(ip_hostnames, incoming_ip)						#Check to see if we have cached hostnames for this IP first
 	if (not hostnames) or (hostnames and relearn_percent <= random.random() * 100):			#We look up with DNS if we have no cached answers, OR if we do have cached answers randomly 3% of the time
@@ -164,7 +164,7 @@ def process_an_address(incoming_ip: str, dns_list: List, zeek_format: bool):
 		#		Debug('A lookup fail: ' + one_hostname)
 		if final_ips:
 			h2i_sig = (one_hostname, str(final_ips))
-			if h2i_sig not in process_an_address.h2i_already_printed:
+			if h2i_sig not in process_an_address.h2i_already_printed:			# type: ignore
 				#Debug('final ips: ' + str(final_ips))
 				if zeek_format:
 					print('aaaaaaaaaaaaaaaaaa\t10.0.0.1\t65535\t0.0.0.1\t53\tudp\t' + one_hostname + '\t1\tC_INTERNET\t1\tA\t0\tNOERROR\t' + ','.join(final_ips))
@@ -172,7 +172,7 @@ def process_an_address(incoming_ip: str, dns_list: List, zeek_format: bool):
 				else:
 					for one_ip in final_ips:
 						print(one_ip + '\t' + one_hostname)
-				process_an_address.h2i_already_printed.append(h2i_sig)
+				process_an_address.h2i_already_printed.append(h2i_sig)			# type: ignore
 
 	#Lookup and print IPv6 ("AAAA") records
 	for one_hostname in hostnames:
@@ -185,14 +185,14 @@ def process_an_address(incoming_ip: str, dns_list: List, zeek_format: bool):
 		#		Debug('AAAA lookup fail: ' + one_hostname)
 		if final_ips:
 			h2i_sig = (one_hostname, str(final_ips))
-			if h2i_sig not in process_an_address.h2i_already_printed:
+			if h2i_sig not in process_an_address.h2i_already_printed:			# type: ignore
 				#Debug('final ips: ' + str(final_ips))
 				if zeek_format:
 					print('aaaaaaaaaaaaaaaaaa\t10.0.0.1\t65535\t0.0.0.1\t53\tudp\t' + one_hostname + '\t1\tC_INTERNET\t1\tAAAA\t0\tNOERROR\t' + ','.join(final_ips))
 				else:
 					for one_ip in final_ips:
 						print(one_ip + '\t' + one_hostname)
-				process_an_address.h2i_already_printed.append(h2i_sig)
+				process_an_address.h2i_already_printed.append(h2i_sig)			# type: ignore
 
 
 #======== Global variables
