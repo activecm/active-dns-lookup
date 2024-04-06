@@ -44,3 +44,28 @@ rita import /full/path/to/dir/with/zeek/logs/ sim_dns_test1
     When that finishes importing, take a look at that database; you 
     should have local hostnames included too.
 
+- If you are doing zone transfers, you need to tell your dns server to
+allow this:
+#==== For named ====
+#Log into the dns server and edit /etc/named.conf . In the section for your domain, like:
+#zone "example.org" {
+#	type master;
+#	...
+#};
+#You need to update the existing allow-transfer line (or create it) so you add the _public_ IP address of the system running this script, like:
+#        allow-transfer { 1.1.1.1; fe80::1; my.public.ip.address; };
+#and run:
+#service named reload
+
+
+#==== For Windows Server 2022 ====
+Go to start, server manager, tools, dns
+Under forward lookup zone, select the zone you want, right click and go to properties
+Select zone transfers tab
+Check off allow zone transfers
+Select "only to the following servers".  Edit server name list.  Click to add and add the IP address of the machine running active_dns_lookup.py (*) and press enter.  Choose OK.
+Click Apply, then OK.
+
+* If that machine is behind a nat device, use the outside IP address of that nat device instead.
+
+
